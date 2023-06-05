@@ -1,0 +1,19 @@
+[package]
+name = "bevy_ressys"
+version = "0.1.0"
+edition = "2021"
+authors = ["fallible-algebra"]
+repository = "https://github.com/fallible-algebra/bevy_ressys"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+proc-macro2 = "1.0.*"
+quote = { version = "1.0.*" }
+syn = { version = "2.0.*", features = ["full", "extra-traits"] }
+
+[dev-dependencies]
+bevy = "0.10.1"
+
+[lib]
+proc-macro = true
