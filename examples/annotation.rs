@@ -8,6 +8,7 @@ fn main() {
         .add_startup_system(warn_system)
         .add_startup_system(warn_system2)
         .add_startup_system(error_system)
+        .add_startup_system(one::two::three::error_system)
         .run();
 }
 
@@ -29,4 +30,17 @@ fn warn_system2(_commands: Commands) -> Result<(), String> {
 #[res_system(error)]
 fn error_system(_commands: Commands) -> Result<(), String> {
     Err(format!("This is a error system"))
+}
+
+pub mod one {
+    pub mod two {
+        pub mod three {
+            use bevy_ressys::res_system;
+            use bevy::prelude::*;
+            #[res_system(error)]
+            pub fn error_system(_commands: Commands) -> Result<(), String> {
+                Err(format!("This is a error system in a bunch of modules."))
+            }
+        }
+    }
 }
