@@ -63,3 +63,43 @@ pub fn res_system(attr: TokenStream, item: TokenStream) -> TokenStream {
     outer_ressys.block = Box::new(parse2(outer_block).unwrap());
     outer_ressys.into_token_stream().into()
 }
+
+/// Minor alteration to [res_system] that passes the arguments to the a simple format string.
+/// i.e. in [res_system] arguments are passed as `macro!(err)` but in this macro it's passed as
+/// `macro!("{}", err)`.
+#[proc_macro_attribute]
+pub fn ressys_fmt(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // We're making an attribute for a system function, so parse as ItemFn.
+    let mut inner_ressys: ItemFn = parse_macro_input!(item as ItemFn);
+    let mut outer_ressys = inner_ressys.clone();
+    let inner_ident = Ident::new("inner_fn_for_res_system", Span::call_site());
+    // Transform the typed arguments into just its patterns
+    let args = inner_ressys.sig.inputs.clone();
+    let args2: Punctuated<Expr, Comma> = args
+        .iter()
+        .map(|arg| {
+            if let FnArg::Typed(pat) = arg {
+                let pattern = pat.pat.clone();
+                Expr::Verbatim(quote! {#pattern})
+            } else {
+                Expr::Verbatim(quote! {compile_error!("Ran into Reciever type in macro")})
+            }
+        })
+        .collect();
+    // rename the inner result system
+    inner_ressys.sig.ident = inner_ident.clone();
+    // Set the return type of the outer result system to the default.
+    outer_ressys.sig.output = ReturnType::Default;
+    // Parse the attributes for the macro as an expression path i.e. `bevy::log::warn`
+    let attr2 = parse_macro_input!(attr as ExprPath);
+    let outer_block = quote! {
+        {
+            #inner_ressys
+            if let Err(err) = #inner_ident(#args2) {
+                #attr2!("{}", err)
+            }
+        }
+    };
+    outer_ressys.block = Box::new(parse2(outer_block).unwrap());
+    outer_ressys.into_token_stream().into()
+}
