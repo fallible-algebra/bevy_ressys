@@ -1,5 +1,5 @@
 use bevy::{prelude::*, log::LogPlugin};
-use bevy_ressys::res_system;
+use bevy_ressys::*;
 
 fn main() {
     App::new()
@@ -7,6 +7,8 @@ fn main() {
         .add_startup_system(info_system)
         .add_startup_system(warn_system)
         .add_startup_system(warn_system2)
+        .add_startup_system(warn_system3)
+        .add_startup_system(warn_system4)
         .add_startup_system(error_system)
         .add_startup_system(one::two::three::error_system)
         .run();
@@ -36,6 +38,14 @@ fn warn_system3(mut q: Query<&mut A>) -> Result<(), String> {
         *a = A;
     }
     Ok(())
+}
+
+#[ressys_fmt(bevy::log::warn)]
+fn warn_system4(mut q: Query<&mut A>) -> Result<(), String> {
+    for mut a in q.iter_mut() {
+        *a = A;
+    }
+    Err("I'm getting shoved in the formatter.".into())
 }
 
 #[res_system(error)]

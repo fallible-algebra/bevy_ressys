@@ -95,7 +95,14 @@ pub fn ressys_fmt(attr: TokenStream, item: TokenStream) -> TokenStream {
         .iter()
         .map(|arg| {
             if let FnArg::Typed(pat) = arg {
-                let pattern = pat.pat.clone();
+                let mut pattern = pat.pat.clone();
+                // This is a hack and a half. should be replaced with a more 
+                // reasonable solution but not handling mutable variables is
+                // a case I entirely forgot about. They all get passed by
+                // value to the system anyway, at least they should be.
+                if let Pat::Ident(ident) = pattern.as_mut() {
+                    ident.mutability = None;
+                }
                 Expr::Verbatim(quote! {#pattern})
             } else {
                 Expr::Verbatim(quote! {compile_error!("Ran into Reciever type in macro")})
@@ -106,6 +113,15 @@ pub fn ressys_fmt(attr: TokenStream, item: TokenStream) -> TokenStream {
     inner_ressys.sig.ident = inner_ident.clone();
     // Set the return type of the outer result system to the default.
     outer_ressys.sig.output = ReturnType::Default;
+    for arg in outer_ressys.sig.inputs.iter_mut() {
+        if let FnArg::Typed(PatType{ pat, ..}) = arg {
+            if let Pat::Ident(ident) = pat.as_mut() {
+                if ident.by_ref.is_none() && ident.mutability.is_some() {
+                    ident.mutability = None;
+                }
+            }
+        }
+    }
     // Parse the attributes for the macro as an expression path i.e. `bevy::log::warn`
     let attr2 = parse_macro_input!(attr as ExprPath);
     let outer_block = quote! {
@@ -117,5 +133,4 @@ pub fn ressys_fmt(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
     outer_ressys.block = Box::new(parse2(outer_block).unwrap());
-    outer_ressys.into_token_stream().into()
-}
+    outer_ressys.into_token_stream().into()}
