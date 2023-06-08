@@ -12,6 +12,9 @@ fn main() {
         .run();
 }
 
+#[derive(Debug, Component)]
+struct A;
+
 #[res_system(info)]
 fn info_system(_commands: Commands) -> Result<(), String> {
     Err(format!("This is a info system"))
@@ -25,6 +28,11 @@ fn warn_system(_commands: Commands) -> Result<(), String> {
 #[res_system(bevy::log::warn)]
 fn warn_system2(_commands: Commands) -> Result<(), String> {
     Err(format!("This is another warning system, showing you can use full macro paths"))
+}
+
+#[res_system(bevy::log::warn)]
+fn warn_system3(mut q: Query<Entity, With<A>>) -> Result<(), String> {
+    Ok(())
 }
 
 #[res_system(error)]

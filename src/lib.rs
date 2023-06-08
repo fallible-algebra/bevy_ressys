@@ -39,7 +39,14 @@ pub fn res_system(attr: TokenStream, item: TokenStream) -> TokenStream {
         .iter()
         .map(|arg| {
             if let FnArg::Typed(pat) = arg {
-                let pattern = pat.pat.clone();
+                let mut pattern = pat.pat.clone();
+                // This is a hack and a half. should be replaced with a more 
+                // reasonable solution but not handling mutable variables is
+                // a case I entirely forgot about. They all get passed by
+                // value to the system anyway, at least they should be.
+                if let Pat::Ident(ident) = pattern.as_mut() {
+                    ident.mutability = None;
+                }
                 Expr::Verbatim(quote! {#pattern})
             } else {
                 Expr::Verbatim(quote! {compile_error!("Ran into Reciever type in macro")})
