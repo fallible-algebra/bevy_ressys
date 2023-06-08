@@ -31,7 +31,10 @@ fn warn_system2(_commands: Commands) -> Result<(), String> {
 }
 
 #[res_system(bevy::log::warn)]
-fn warn_system3(mut q: Query<Entity, With<A>>) -> Result<(), String> {
+fn warn_system3(mut q: Query<&mut A>) -> Result<(), String> {
+    for mut a in q.iter_mut() {
+        *a = A;
+    }
     Ok(())
 }
 

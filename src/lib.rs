@@ -57,6 +57,15 @@ pub fn res_system(attr: TokenStream, item: TokenStream) -> TokenStream {
     inner_ressys.sig.ident = inner_ident.clone();
     // Set the return type of the outer result system to the default.
     outer_ressys.sig.output = ReturnType::Default;
+    for arg in outer_ressys.sig.inputs.iter_mut() {
+        if let FnArg::Typed(PatType{ pat, ..}) = arg {
+            if let Pat::Ident(ident) = pat.as_mut() {
+                if ident.by_ref.is_none() && ident.mutability.is_some() {
+                    ident.mutability = None;
+                }
+            }
+        }
+    }
     // Parse the attributes for the macro as an expression path i.e. `bevy::log::warn`
     let attr2 = parse_macro_input!(attr as ExprPath);
     let outer_block = quote! {
